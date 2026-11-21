@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="./manifest.json">
+  <title>GOODS POS</title>
+  <style>
+    body { background: #0f172a; color: #f8fafc; font-family: sans-serif; display: flex; height: 100vh; align-items: center; justify-content: center; margin: 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="bootMsg">正在啟動 GOODS POS...</div>
+  <script>
+    // ★★★ 請將下方引號內換成你的 GAS 網頁應用程式網址 (結尾 /exec) ★★★
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbysoUKyuNFfQbWMlrNFI681U9QfnUOoIKLOJvbWlBjgtHqM1fdvnjkXjVN4F09k9Ezdug/exec';
+
+    window.GAS_API_URL = GAS_URL;
+    localStorage.setItem('goods_pos_gas_url', GAS_URL);
+
+    // 註冊離線 Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
+    async function boot() {
+      const cachedHtml = localStorage.getItem('goods_pos_app_html');
+      if (cachedHtml) {
+        // 已有本機快取：0.1 秒直接離線啟動
+        document.open();
+        document.write(cachedHtml);
+        document.close();
+        return;
+      }
+      // 首次開啟：從 GAS 下載主程式並存入本機
+      try {
+        document.getElementById('bootMsg').textContent = '首次啟動，正在從 Google 試算表下載 POS 程式...';
+        const res = await fetch(GAS_URL + '?action=getApp');
+        const json = await res.json();
+        if (json.ok && json.html) {
+          localStorage.setItem('goods_pos_app_html', json.html);
+          document.open();
+          document.write(json.html);
+          document.close();
+        } else {
+          throw new Error('回傳格式錯誤');
+        }
+      } catch (err) {
+        document.getElementById('bootMsg').innerHTML = '首次下載失敗，請確認網路連線與 GAS 網址是否正確。<br><br><button onclick="location.reload()" style="padding:10px 20px;font-size:16px;">重試</button>';
+      }
+    }
+    boot();
+  </script>
+</body>
+</html>
