@@ -1,4 +1,4 @@
-const CACHE_NAME = 'goods-pos-shell-v1';
+const CACHE_NAME = 'goods-pos-shell-v2';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
